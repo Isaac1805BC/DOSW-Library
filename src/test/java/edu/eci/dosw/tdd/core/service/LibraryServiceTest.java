@@ -1,7 +1,10 @@
 package edu.eci.dosw.tdd.core.service;
 
+import edu.eci.dosw.tdd.core.exception.BookNotAvailableException;
 import edu.eci.dosw.tdd.core.exception.ResourceNotFoundException;
 import edu.eci.dosw.tdd.core.model.Book;
+import edu.eci.dosw.tdd.core.model.Loan;
+import edu.eci.dosw.tdd.core.model.Status;
 import edu.eci.dosw.tdd.core.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,6 +93,42 @@ class LibraryServiceTest {
     void getUserByIdNotFound() {
         assertThrows(ResourceNotFoundException.class, () -> {
             libraryService.getUserById("999");
+        });
+    }
+
+    // ========== Tests para Préstamos ==========
+
+    @Test
+    void createLoanSuccess() {
+        Book book = new Book("1", "Clean Code", "Robert C. Martin");
+        User user = new User("1", "Isaac");
+        libraryService.addBook(book, 2);
+        libraryService.registerUser(user);
+
+        Loan loan = libraryService.createLoan("1", "1");
+
+        assertNotNull(loan);
+        assertEquals(Status.ACTIVE, loan.getStatus());
+        assertEquals("Clean Code", loan.getBook().getTitle());
+        assertEquals("Isaac", loan.getUser().getName());
+        assertNotNull(loan.getLoanDate());
+        assertNull(loan.getReturnDate());
+
+        libraryService.createLoan("1", "1");
+        assertThrows(BookNotAvailableException.class, () -> {
+            libraryService.createLoan("1", "1");
+        });
+    }
+
+    @Test
+    void createLoanBookNotAvailable() {
+        Book book = new Book("1", "Clean Code", "Robert C. Martin");
+        User user = new User("1", "Isaac");
+        libraryService.addBook(book, 0);
+        libraryService.registerUser(user);
+
+        assertThrows(BookNotAvailableException.class, () -> {
+            libraryService.createLoan("1", "1");
         });
     }
 }
