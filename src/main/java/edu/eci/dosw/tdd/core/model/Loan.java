@@ -4,16 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Loan {
-    private String id;
-    private User user;
     private Book book;
-    private LocalDateTime loanDate;
-    private LocalDateTime returnDate;
-    private String status;
+    private User user;
+    private LocalDate loanDate;
+    private Status status;
+    private LocalDate returnDate;
 }
