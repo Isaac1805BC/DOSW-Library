@@ -1,11 +1,14 @@
 package edu.eci.dosw.tdd.core.service;
 
+import edu.eci.dosw.tdd.core.exception.BookNotAvailableException;
 import edu.eci.dosw.tdd.core.exception.ResourceNotFoundException;
 import edu.eci.dosw.tdd.core.model.Book;
 import edu.eci.dosw.tdd.core.model.Loan;
+import edu.eci.dosw.tdd.core.model.Status;
 import edu.eci.dosw.tdd.core.model.User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,5 +55,21 @@ public class LibraryService {
                 .filter(user -> user.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+    }
+
+    public Loan createLoan(String bookId, String userId) {
+        Book book = getBookById(bookId);
+        User user = getUserById(userId);
+
+        int available = books.getOrDefault(book, 0);
+        if (available <= 0) {
+            throw new BookNotAvailableException("Book not available: " + book.getTitle());
+        }
+
+        books.put(book, available - 1);
+
+        Loan loan = new Loan(book, user, LocalDate.now(), Status.ACTIVE, null);
+        loans.add(loan);
+        return loan;
     }
 }
