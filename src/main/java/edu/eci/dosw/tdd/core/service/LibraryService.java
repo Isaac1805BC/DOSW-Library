@@ -38,4 +38,19 @@ public class LibraryService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
     }
+
+    public void registerUser(User user) {
+        users.add(user);
+    }
+
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users);
+    }
+
+    public User getUserById(String id) {
+        return users.stream()
+                .filter(user -> user.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+    }
 }
