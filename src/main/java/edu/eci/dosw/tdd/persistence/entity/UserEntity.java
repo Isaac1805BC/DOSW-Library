@@ -17,14 +17,17 @@ public class UserEntity {
 
     @Id
     private String id;
-    
+
+    @Column(nullable = false)
+    private String name;
+
     @Column(unique = true, nullable = false)
-    private String name; // Using 'name' as username
-    
+    private String email;
+
     @Column(nullable = false)
     private String password;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role roles;
+    private Role role;
 }

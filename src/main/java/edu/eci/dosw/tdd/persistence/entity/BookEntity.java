@@ -1,8 +1,6 @@
 package edu.eci.dosw.tdd.persistence.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,9 +16,19 @@ public class BookEntity {
 
     @Id
     private String id;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
     private String author;
-    
+
+    @Column
+    private String isbn;
+
+    @Column(nullable = false)
     private int cantidadTotal;
+
+    @Column(nullable = false)
     private int cantidadDisponible;
 }

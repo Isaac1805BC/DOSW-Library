@@ -14,6 +14,6 @@ public interface LoanMapper {
     LoanEntity toEntity(Loan loan);
 
     Loan toModel(LoanEntity entity);
-    
+
     List<Loan> toModelList(List<LoanEntity> entities);
 }

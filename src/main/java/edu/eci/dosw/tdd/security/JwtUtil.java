@@ -21,7 +21,7 @@ public class JwtUtil {
     private final SecretKey key;
     private final long expiration;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret, 
+    public JwtUtil(@Value("${jwt.secret}") String secret,
                    @Value("${jwt.expiration}") long expiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration;
@@ -30,9 +30,13 @@ public class JwtUtil {
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
-    
+
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
     public Date extractExpiration(String token) {
@@ -52,8 +56,9 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails, String role) {
+    public String generateToken(UserDetails userDetails, String userId, String role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
         claims.put("role", role);
         return createToken(claims, userDetails.getUsername());
     }
