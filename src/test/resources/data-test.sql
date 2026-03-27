@@ -1,6 +1,5 @@
--- Seed initial LIBRARIAN user for first login
--- Password: 'admin123' hashed with BCrypt (strength 10)
-DELETE FROM users WHERE email = 'admin@biblioteca.com';
+-- Seed user for testing
+-- Password: 'admin123' hashed with BCrypt
 INSERT INTO users (id, name, email, password, role)
 VALUES (
     'seed-admin-001',

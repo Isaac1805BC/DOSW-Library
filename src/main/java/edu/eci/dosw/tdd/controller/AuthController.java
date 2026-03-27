@@ -40,7 +40,7 @@ public class AuthController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            // Fetch the user entity to get the ID to embed in the token
+            
             UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow();
 
