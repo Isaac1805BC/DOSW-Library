@@ -1,6 +1,5 @@
-package edu.eci.dosw.tdd.persistence.entity;
+package edu.eci.dosw.tdd.persistence.relational.entity;
 
-import edu.eci.dosw.tdd.core.model.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,26 +7,28 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")
+@Table(name = "books")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+public class BookEntity {
 
     @Id
     private String id;
 
     @Column(nullable = false)
-    private String name;
-
-    @Column(unique = true, nullable = false)
-    private String email;
+    private String title;
 
     @Column(nullable = false)
-    private String password;
+    private String author;
 
-    @Enumerated(EnumType.STRING)
+    @Column
+    private String isbn;
+
     @Column(nullable = false)
-    private Role role;
+    private int cantidadTotal;
+
+    @Column(nullable = false)
+    private int cantidadDisponible;
 }
