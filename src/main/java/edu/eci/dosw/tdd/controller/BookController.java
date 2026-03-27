@@ -2,6 +2,7 @@ package edu.eci.dosw.tdd.controller;
 
 import edu.eci.dosw.tdd.core.model.Book;
 import edu.eci.dosw.tdd.core.service.LibraryService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,16 +24,19 @@ public class BookController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('LIBRARIAN', 'USER')")
     public List<Book> getAllBooks() {
         return libraryService.getAllBooks();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('LIBRARIAN', 'USER')")
     public Book getBookById(@PathVariable String id) {
         return libraryService.getBookById(id);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('LIBRARIAN')")
     public void addBook(@RequestBody Book book, @RequestParam int quantity) {
         libraryService.addBook(book, quantity);
     }
