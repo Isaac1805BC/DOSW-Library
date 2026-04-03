@@ -5,17 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Loan {
-    private String id;
-    private Book book;
-    private User user;
-    private LocalDate loanDate;
+public class LoanHistoryEntry {
     private Status status;
-    private LocalDate returnDate;
-    private List<LoanHistoryEntry> history;
+    private LocalDate executedAt;
 }

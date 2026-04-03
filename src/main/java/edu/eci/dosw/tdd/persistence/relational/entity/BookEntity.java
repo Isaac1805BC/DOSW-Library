@@ -27,8 +27,8 @@ public class BookEntity {
     private String isbn;
 
     @Column(nullable = false)
-    private int cantidadTotal;
+    private int totalQuantity;
 
     @Column(nullable = false)
-    private int cantidadDisponible;
+    private int availableQuantity;
 }

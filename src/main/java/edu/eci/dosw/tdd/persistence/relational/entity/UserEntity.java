@@ -1,6 +1,7 @@
 package edu.eci.dosw.tdd.persistence.relational.entity;
 
-import edu.eci.dosw.tdd.core.model.UserRole;
+import edu.eci.dosw.tdd.core.model.Role;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,5 +29,5 @@ public class UserEntity {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private Role role;
 }

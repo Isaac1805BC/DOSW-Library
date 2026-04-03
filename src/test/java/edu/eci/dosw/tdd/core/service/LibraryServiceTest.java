@@ -46,8 +46,6 @@ class LibraryServiceTest {
     @InjectMocks
     private LibraryService libraryService;
 
-    // ==================== BOOK TESTS ====================
-
     @Test
     void addBookAndGetAll() {
         Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0);
@@ -77,8 +75,8 @@ class LibraryServiceTest {
         Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0);
         libraryService.addBook(book, 3);
 
-        assertEquals(5, existing.getCantidadTotal());
-        assertEquals(5, existing.getCantidadDisponible());
+        assertEquals(5, existing.getTotalQuantity());
+        assertEquals(5, existing.getAvailableQuantity());
         verify(bookRepository).save(existing);
     }
 
@@ -102,8 +100,6 @@ class LibraryServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> libraryService.getBookById("999"));
     }
-
-    // ==================== USER TESTS ====================
 
     @Test
     void registerUserAndGetAll() {
@@ -145,8 +141,6 @@ class LibraryServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> libraryService.getUserById("999"));
     }
 
-    // ==================== LOAN TESTS ====================
-
     @Test
     void createLoanSuccess() {
         BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 2);
@@ -165,7 +159,7 @@ class LibraryServiceTest {
 
         assertNotNull(result);
         assertEquals(Status.ACTIVE, result.getStatus());
-        assertEquals(1, book.getCantidadDisponible());
+        assertEquals(1, book.getAvailableQuantity());
     }
 
     @Test
@@ -194,7 +188,7 @@ class LibraryServiceTest {
         Loan result = libraryService.returnLoan("L1");
 
         assertEquals(Status.RETURNED, result.getStatus());
-        assertEquals(2, book.getCantidadDisponible()); // restored
+        assertEquals(2, book.getAvailableQuantity());
         assertNotNull(result.getReturnDate());
     }
 
@@ -210,7 +204,7 @@ class LibraryServiceTest {
     }
 
     @Test
-    void returnLoanDoesNotExceedCantidadTotal() {
+    void returnLoanDoesNotExceedTotalQuantity() {
         BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 2);
         UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
         LoanEntity loan = new LoanEntity("L1", book, user, LocalDate.now().minusDays(1), Status.ACTIVE, null);
@@ -222,8 +216,7 @@ class LibraryServiceTest {
 
         libraryService.returnLoan("L1");
 
-        // cantidadDisponible (2) == cantidadTotal (2), so no save on book
         verify(bookRepository, never()).save(any(BookEntity.class));
-        assertEquals(2, book.getCantidadDisponible()); // unchanged
+        assertEquals(2, book.getAvailableQuantity());
     }
 }

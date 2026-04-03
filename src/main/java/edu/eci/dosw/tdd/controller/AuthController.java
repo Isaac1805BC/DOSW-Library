@@ -40,7 +40,6 @@ public class AuthController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            
             UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow();
 

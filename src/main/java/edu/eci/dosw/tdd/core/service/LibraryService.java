@@ -37,8 +37,6 @@ public class LibraryService {
 
     private final PasswordEncoder passwordEncoder;
 
-    // ==================== BOOKS ====================
-
     @Transactional
     public void addBook(Book book, int quantity) {
         if (quantity <= 0) {
@@ -47,12 +45,12 @@ public class LibraryService {
 
         BookEntity entity = bookRepository.findById(book.getId()).orElse(null);
         if (entity != null) {
-            entity.setCantidadTotal(entity.getCantidadTotal() + quantity);
-            entity.setCantidadDisponible(entity.getCantidadDisponible() + quantity);
+            entity.setTotalQuantity(entity.getTotalQuantity() + quantity);
+            entity.setAvailableQuantity(entity.getAvailableQuantity() + quantity);
             bookRepository.save(entity);
         } else {
-            book.setCantidadTotal(quantity);
-            book.setCantidadDisponible(quantity);
+            book.setTotalQuantity(quantity);
+            book.setAvailableQuantity(quantity);
             bookRepository.save(bookMapper.toEntity(book));
         }
     }
@@ -69,11 +67,8 @@ public class LibraryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
     }
 
-    // ==================== USERS ====================
-
     @Transactional
     public void registerUser(User user) {
-        // Hash the plain-text password before persisting
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(userMapper.toEntity(user));
     }
@@ -90,8 +85,6 @@ public class LibraryService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
-    // ==================== LOANS ====================
-
     @Transactional
     public Loan createLoan(String bookId, String userId) {
         BookEntity book = bookRepository.findById(bookId)
@@ -100,11 +93,11 @@ public class LibraryService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        if (book.getCantidadDisponible() <= 0) {
+        if (book.getAvailableQuantity() <= 0) {
             throw new BookNotAvailableException("Book is not available: " + book.getTitle());
         }
 
-        book.setCantidadDisponible(book.getCantidadDisponible() - 1);
+        book.setAvailableQuantity(book.getAvailableQuantity() - 1);
         bookRepository.save(book);
 
         LoanEntity loan = new LoanEntity();
@@ -129,9 +122,8 @@ public class LibraryService {
         loan.setReturnDate(LocalDate.now());
 
         BookEntity book = loan.getBook();
-        // Guard: never exceed cantidadTotal
-        if (book.getCantidadDisponible() < book.getCantidadTotal()) {
-            book.setCantidadDisponible(book.getCantidadDisponible() + 1);
+        if (book.getAvailableQuantity() < book.getTotalQuantity()) {
+            book.setAvailableQuantity(book.getAvailableQuantity() + 1);
             bookRepository.save(book);
         }
 
