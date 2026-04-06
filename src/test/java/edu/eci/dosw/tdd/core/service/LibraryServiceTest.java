@@ -7,15 +7,9 @@ import edu.eci.dosw.tdd.core.model.Loan;
 import edu.eci.dosw.tdd.core.model.Role;
 import edu.eci.dosw.tdd.core.model.Status;
 import edu.eci.dosw.tdd.core.model.User;
-import edu.eci.dosw.tdd.persistence.entity.BookEntity;
-import edu.eci.dosw.tdd.persistence.entity.LoanEntity;
-import edu.eci.dosw.tdd.persistence.entity.UserEntity;
-import edu.eci.dosw.tdd.persistence.mapper.BookMapper;
-import edu.eci.dosw.tdd.persistence.mapper.LoanMapper;
-import edu.eci.dosw.tdd.persistence.mapper.UserMapper;
-import edu.eci.dosw.tdd.persistence.repository.BookRepository;
-import edu.eci.dosw.tdd.persistence.repository.LoanRepository;
-import edu.eci.dosw.tdd.persistence.repository.UserRepository;
+import edu.eci.dosw.tdd.core.port.IBookRepository;
+import edu.eci.dosw.tdd.core.port.ILoanRepository;
+import edu.eci.dosw.tdd.core.port.IUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,44 +30,41 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LibraryServiceTest {
 
-    @Mock private BookRepository bookRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private LoanRepository loanRepository;
-    @Mock private BookMapper bookMapper;
-    @Mock private UserMapper userMapper;
-    @Mock private LoanMapper loanMapper;
+    @Mock private IBookRepository bookRepository;
+    @Mock private IUserRepository userRepository;
+    @Mock private ILoanRepository loanRepository;
     @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private LibraryService libraryService;
 
+    // ─── Book Tests ───────────────────────────────────────────────────────────
+
     @Test
     void addBookAndGetAll() {
-        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0);
-        BookEntity entity = new BookEntity("1", "Clean Code", "Robert C. Martin", "978-0-13", 3, 3);
+        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0, null, null, null, null, null, null);
+        Book saved = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 3, 3, null, null, null, null, null, null);
 
         when(bookRepository.findById("1")).thenReturn(Optional.empty());
-        when(bookMapper.toEntity(any(Book.class))).thenReturn(entity);
-        when(bookRepository.save(entity)).thenReturn(entity);
-        when(bookRepository.findAll()).thenReturn(List.of(entity));
-        when(bookMapper.toModelList(List.of(entity))).thenReturn(List.of(book));
+        when(bookRepository.save(any(Book.class))).thenReturn(saved);
+        when(bookRepository.findAll()).thenReturn(List.of(saved));
 
         libraryService.addBook(book, 3);
         List<Book> books = libraryService.getAllBooks();
 
         assertEquals(1, books.size());
         assertEquals("Clean Code", books.get(0).getTitle());
-        verify(bookRepository).save(any(BookEntity.class));
+        verify(bookRepository).save(any(Book.class));
     }
 
     @Test
     void addBookIncreasesQuantityWhenExists() {
-        BookEntity existing = new BookEntity("1", "Clean Code", "Robert C. Martin", "978-0-13", 2, 2);
+        Book existing = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 2, 2, null, null, null, null, null, null);
 
         when(bookRepository.findById("1")).thenReturn(Optional.of(existing));
-        when(bookRepository.save(existing)).thenReturn(existing);
+        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
-        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0);
+        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 0, 0, null, null, null, null, null, null);
         libraryService.addBook(book, 3);
 
         assertEquals(5, existing.getTotalQuantity());
@@ -82,11 +74,9 @@ class LibraryServiceTest {
 
     @Test
     void getBookByIdSuccess() {
-        BookEntity entity = new BookEntity("1", "Clean Code", "Robert C. Martin", "978-0-13", 1, 1);
-        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 1, 1);
+        Book book = new Book("1", "Clean Code", "Robert C. Martin", "978-0-13", 1, 1, null, null, null, null, null, null);
 
-        when(bookRepository.findById("1")).thenReturn(Optional.of(entity));
-        when(bookMapper.toModel(entity)).thenReturn(book);
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book));
 
         Book found = libraryService.getBookById("1");
 
@@ -101,16 +91,16 @@ class LibraryServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> libraryService.getBookById("999"));
     }
 
+    // ─── User Tests ───────────────────────────────────────────────────────────
+
     @Test
     void registerUserAndGetAll() {
-        User user = new User("1", "Isaac", "isaac@lib.com", "plaintext", Role.USER);
-        UserEntity entity = new UserEntity("1", "Isaac", "isaac@lib.com", "hashed", Role.USER);
+        User user = new User("1", "Isaac", "isaac@lib.com", "plaintext", Role.USER, null, null);
+        User saved = new User("1", "Isaac", "isaac@lib.com", "hashed", Role.USER, null, null);
 
         when(passwordEncoder.encode("plaintext")).thenReturn("hashed");
-        when(userMapper.toEntity(any(User.class))).thenReturn(entity);
-        when(userRepository.save(entity)).thenReturn(entity);
-        when(userRepository.findAll()).thenReturn(List.of(entity));
-        when(userMapper.toModelList(List.of(entity))).thenReturn(List.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(saved);
+        when(userRepository.findAll()).thenReturn(List.of(saved));
 
         libraryService.registerUser(user);
         List<User> users = libraryService.getAllUsers();
@@ -122,11 +112,9 @@ class LibraryServiceTest {
 
     @Test
     void getUserByIdSuccess() {
-        UserEntity entity = new UserEntity("1", "Isaac", "isaac@lib.com", "hashed", Role.USER);
-        User user = new User("1", "Isaac", "isaac@lib.com", null, Role.USER);
+        User user = new User("1", "Isaac", "isaac@lib.com", null, Role.USER, null, null);
 
-        when(userRepository.findById("1")).thenReturn(Optional.of(entity));
-        when(userMapper.toModel(entity)).thenReturn(user);
+        when(userRepository.findById("1")).thenReturn(Optional.of(user));
 
         User found = libraryService.getUserById("1");
 
@@ -141,19 +129,18 @@ class LibraryServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> libraryService.getUserById("999"));
     }
 
+    // ─── Loan Tests ───────────────────────────────────────────────────────────
+
     @Test
     void createLoanSuccess() {
-        BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 2);
-        UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
-        LoanEntity savedLoan = new LoanEntity(null, book, user, LocalDate.now(), Status.ACTIVE, null);
-        Loan loanModel = new Loan("loan-id", new Book("B1", "Clean Code", "Martin", "978", 2, 1),
-                new User("U1", "Isaac", "isaac@lib.com", null, Role.USER), LocalDate.now(), Status.ACTIVE, null);
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 2, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", "hash", Role.USER, null, null);
+        Loan savedLoan = new Loan("loan-id", book, user, LocalDate.now(), Status.ACTIVE, null, null);
 
         when(bookRepository.findById("B1")).thenReturn(Optional.of(book));
         when(userRepository.findById("U1")).thenReturn(Optional.of(user));
-        when(bookRepository.save(book)).thenReturn(book);
-        when(loanRepository.save(any(LoanEntity.class))).thenReturn(savedLoan);
-        when(loanMapper.toModel(savedLoan)).thenReturn(loanModel);
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(loanRepository.save(any(Loan.class))).thenReturn(savedLoan);
 
         Loan result = libraryService.createLoan("B1", "U1");
 
@@ -164,8 +151,8 @@ class LibraryServiceTest {
 
     @Test
     void createLoanBookNotAvailable() {
-        BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 1, 0);
-        UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 1, 0, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", "hash", Role.USER, null, null);
 
         when(bookRepository.findById("B1")).thenReturn(Optional.of(book));
         when(userRepository.findById("U1")).thenReturn(Optional.of(user));
@@ -175,15 +162,14 @@ class LibraryServiceTest {
 
     @Test
     void returnLoanSuccess() {
-        BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 1);
-        UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
-        LoanEntity loan = new LoanEntity("L1", book, user, LocalDate.now().minusDays(1), Status.ACTIVE, null);
-        Loan returnedModel = new Loan("L1", null, null, loan.getLoanDate(), Status.RETURNED, LocalDate.now());
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 1, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", "hash", Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now().minusDays(1), Status.ACTIVE, null, null);
+        Loan returned = new Loan("L1", book, user, loan.getLoanDate(), Status.RETURNED, LocalDate.now(), null);
 
         when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
-        when(bookRepository.save(book)).thenReturn(book);
-        when(loanRepository.save(loan)).thenReturn(loan);
-        when(loanMapper.toModel(loan)).thenReturn(returnedModel);
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(loanRepository.save(any(Loan.class))).thenReturn(returned);
 
         Loan result = libraryService.returnLoan("L1");
 
@@ -194,9 +180,9 @@ class LibraryServiceTest {
 
     @Test
     void returnLoanNotActive() {
-        BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 2);
-        UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
-        LoanEntity loan = new LoanEntity("L1", book, user, LocalDate.now().minusDays(5), Status.RETURNED, LocalDate.now().minusDays(1));
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 2, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", "hash", Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now().minusDays(5), Status.RETURNED, LocalDate.now().minusDays(1), null);
 
         when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
 
@@ -205,18 +191,88 @@ class LibraryServiceTest {
 
     @Test
     void returnLoanDoesNotExceedTotalQuantity() {
-        BookEntity book = new BookEntity("B1", "Clean Code", "Martin", "978", 2, 2);
-        UserEntity user = new UserEntity("U1", "Isaac", "isaac@lib.com", "hash", Role.USER);
-        LoanEntity loan = new LoanEntity("L1", book, user, LocalDate.now().minusDays(1), Status.ACTIVE, null);
-        Loan returnedModel = new Loan("L1", null, null, loan.getLoanDate(), Status.RETURNED, LocalDate.now());
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 2, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", "hash", Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now().minusDays(1), Status.ACTIVE, null, null);
+        Loan returned = new Loan("L1", book, user, loan.getLoanDate(), Status.RETURNED, LocalDate.now(), null);
 
         when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
-        when(loanRepository.save(loan)).thenReturn(loan);
-        when(loanMapper.toModel(loan)).thenReturn(returnedModel);
+        when(loanRepository.save(any(Loan.class))).thenReturn(returned);
 
         libraryService.returnLoan("L1");
 
-        verify(bookRepository, never()).save(any(BookEntity.class));
+        verify(bookRepository, never()).save(any(Book.class));
         assertEquals(2, book.getAvailableQuantity());
+    }
+
+    // ─── 5 Nuevos Tests (Reto #6) ─────────────────────────────────────────────
+
+    @Test
+    void getLoanByIdSuccess() {
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 1, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", null, Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now(), Status.ACTIVE, null, null);
+
+        when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
+
+        Loan result = libraryService.getLoanById("L1");
+
+        assertEquals("L1", result.getId());
+    }
+
+    @Test
+    void getAllLoansReturnsEmpty() {
+        when(loanRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<Loan> result = libraryService.getAllLoans();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void createLoanFromEmptyState() {
+        Book book = new Book("B2", "Refactoring", "Fowler", "978-2", 1, 1, null, null, null, null, null, null);
+        User user = new User("U2", "Maria", "maria@lib.com", "hash", Role.USER, null, null);
+        Loan savedLoan = new Loan("loan-new", book, user, LocalDate.now(), Status.ACTIVE, null, null);
+
+        when(bookRepository.findById("B2")).thenReturn(Optional.of(book));
+        when(userRepository.findById("U2")).thenReturn(Optional.of(user));
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(loanRepository.save(any(Loan.class))).thenReturn(savedLoan);
+
+        Loan result = libraryService.createLoan("B2", "U2");
+
+        assertNotNull(result);
+        assertEquals("loan-new", result.getId());
+        assertEquals(Status.ACTIVE, result.getStatus());
+    }
+
+    @Test
+    void deleteLoanSuccess() {
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 2, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", null, Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now(), Status.ACTIVE, null, null);
+
+        when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
+        doNothing().when(loanRepository).deleteById("L1");
+
+        assertDoesNotThrow(() -> libraryService.deleteLoan("L1"));
+        verify(loanRepository).deleteById("L1");
+    }
+
+    @Test
+    void deleteLoanAndGetAllReturnsEmpty() {
+        Book book = new Book("B1", "Clean Code", "Martin", "978", 2, 2, null, null, null, null, null, null);
+        User user = new User("U1", "Isaac", "isaac@lib.com", null, Role.USER, null, null);
+        Loan loan = new Loan("L1", book, user, LocalDate.now(), Status.ACTIVE, null, null);
+
+        when(loanRepository.findById("L1")).thenReturn(Optional.of(loan));
+        doNothing().when(loanRepository).deleteById("L1");
+        when(loanRepository.findAll()).thenReturn(Collections.emptyList());
+
+        libraryService.deleteLoan("L1");
+        List<Loan> result = libraryService.getAllLoans();
+
+        assertTrue(result.isEmpty());
     }
 }

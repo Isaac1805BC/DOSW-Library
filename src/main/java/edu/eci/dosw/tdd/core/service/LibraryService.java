@@ -6,91 +6,71 @@ import edu.eci.dosw.tdd.core.model.Book;
 import edu.eci.dosw.tdd.core.model.Loan;
 import edu.eci.dosw.tdd.core.model.Status;
 import edu.eci.dosw.tdd.core.model.User;
-import edu.eci.dosw.tdd.persistence.relational.entity.BookEntity;
-import edu.eci.dosw.tdd.persistence.relational.entity.LoanEntity;
-import edu.eci.dosw.tdd.persistence.relational.entity.UserEntity;
-import edu.eci.dosw.tdd.persistence.relational.mapper.BookMapper;
-import edu.eci.dosw.tdd.persistence.relational.mapper.LoanMapper;
-import edu.eci.dosw.tdd.persistence.relational.mapper.UserMapper;
-import edu.eci.dosw.tdd.persistence.relational.repository.BookRepository;
-import edu.eci.dosw.tdd.persistence.relational.repository.LoanRepository;
-import edu.eci.dosw.tdd.persistence.relational.repository.UserRepository;
+import edu.eci.dosw.tdd.core.port.IBookRepository;
+import edu.eci.dosw.tdd.core.port.ILoanRepository;
+import edu.eci.dosw.tdd.core.port.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class LibraryService {
 
-    private final BookRepository bookRepository;
-    private final UserRepository userRepository;
-    private final LoanRepository loanRepository;
-
-    private final BookMapper bookMapper;
-    private final UserMapper userMapper;
-    private final LoanMapper loanMapper;
-
+    private final IBookRepository bookRepository;
+    private final IUserRepository userRepository;
+    private final ILoanRepository loanRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
     public void addBook(Book book, int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
 
-        BookEntity entity = bookRepository.findById(book.getId()).orElse(null);
-        if (entity != null) {
-            entity.setTotalQuantity(entity.getTotalQuantity() + quantity);
-            entity.setAvailableQuantity(entity.getAvailableQuantity() + quantity);
-            bookRepository.save(entity);
+        Book existing = bookRepository.findById(book.getId()).orElse(null);
+        if (existing != null) {
+            existing.setTotalQuantity(existing.getTotalQuantity() + quantity);
+            existing.setAvailableQuantity(existing.getAvailableQuantity() + quantity);
+            bookRepository.save(existing);
         } else {
             book.setTotalQuantity(quantity);
             book.setAvailableQuantity(quantity);
-            bookRepository.save(bookMapper.toEntity(book));
+            bookRepository.save(book);
         }
     }
 
-    @Transactional(readOnly = true)
     public List<Book> getAllBooks() {
-        return bookMapper.toModelList(bookRepository.findAll());
+        return bookRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
     public Book getBookById(String id) {
         return bookRepository.findById(id)
-                .map(bookMapper::toModel)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
     }
 
-    @Transactional
     public void registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(userMapper.toEntity(user));
+        userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
     public List<User> getAllUsers() {
-        return userMapper.toModelList(userRepository.findAll());
+        return userRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
     public User getUserById(String id) {
         return userRepository.findById(id)
-                .map(userMapper::toModel)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
-    @Transactional
     public Loan createLoan(String bookId, String userId) {
-        BookEntity book = bookRepository.findById(bookId)
+        Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
-        UserEntity user = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         if (book.getAvailableQuantity() <= 0) {
@@ -100,18 +80,18 @@ public class LibraryService {
         book.setAvailableQuantity(book.getAvailableQuantity() - 1);
         bookRepository.save(book);
 
-        LoanEntity loan = new LoanEntity();
+        Loan loan = new Loan();
+        loan.setId(UUID.randomUUID().toString());
         loan.setBook(book);
         loan.setUser(user);
         loan.setLoanDate(LocalDate.now());
         loan.setStatus(Status.ACTIVE);
 
-        return loanMapper.toModel(loanRepository.save(loan));
+        return loanRepository.save(loan);
     }
 
-    @Transactional
     public Loan returnLoan(String loanId) {
-        LoanEntity loan = loanRepository.findById(loanId)
+        Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found with ID: " + loanId));
 
         if (loan.getStatus() != Status.ACTIVE) {
@@ -121,25 +101,34 @@ public class LibraryService {
         loan.setStatus(Status.RETURNED);
         loan.setReturnDate(LocalDate.now());
 
-        BookEntity book = loan.getBook();
+        Book book = loan.getBook();
         if (book.getAvailableQuantity() < book.getTotalQuantity()) {
             book.setAvailableQuantity(book.getAvailableQuantity() + 1);
             bookRepository.save(book);
         }
 
-        return loanMapper.toModel(loanRepository.save(loan));
+        return loanRepository.save(loan);
     }
 
-    @Transactional(readOnly = true)
     public List<Loan> getAllLoans() {
-        return loanMapper.toModelList(loanRepository.findAll());
+        return loanRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    public Loan getLoanById(String id) {
+        return loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found with ID: " + id));
+    }
+
+    public void deleteLoan(String id) {
+        loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found with ID: " + id));
+        loanRepository.deleteById(id);
+    }
+
     public List<Loan> getLoansByUserId(String userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with ID: " + userId);
         }
-        return loanMapper.toModelList(loanRepository.findByUser_Id(userId));
+        return loanRepository.findByUserId(userId);
     }
 }

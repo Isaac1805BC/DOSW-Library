@@ -1,36 +1,44 @@
-# Profile-specific configuration for relational (PostgreSQL) and mongo (MongoDB Atlas).
-
-# Usage:
-# - Keep existing PostgreSQL settings in application.properties (current defaults).
-# - Activate a profile with `-Dspring.profiles.active=relational` or `mongo`.
-
 spring:
-	profiles: "relational"
+  profiles:
+    active: mongo
 
 ---
 
 spring:
-	profiles: relational
-	datasource:
-		url: jdbc:postgresql://localhost:5432/biblioteca_db
-		username: postgres
-		password: isa1805fl
-		driver-class-name: org.postgresql.Driver
-	jpa:
-		hibernate:
-			ddl-auto: create-drop
-		properties:
-			hibernate:
-				dialect: org.hibernate.dialect.PostgreSQLDialect
-		show-sql: true
+  config:
+    activate:
+      on-profile: relational
+  datasource:
+    url: jdbc:postgresql://localhost:5432/biblioteca_db
+    username: postgres
+    password: isa1805fl
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration
 
 ---
 
 spring:
-	profiles: mongo
-	data:
-		mongodb:
-			# Replace the placeholders below with your MongoDB Atlas connection values.
-			uri: mongodb+srv://<username>:<password>@<cluster-address>/<database>?retryWrites=true&w=majority
-
-# JWT and common configuration can remain in application.properties to be shared across profiles.
+  config:
+    activate:
+      on-profile: mongo
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://root:mongo12345@cluster0.ygomb7z.mongodb.net/DOSW-Library?retryWrites=true&w=majority}
+      database: dosw-library
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
