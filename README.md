@@ -16,6 +16,10 @@ A continuación, se presentan los diagramas que modelan la solución, mejorados 
 
 ![Diagrama de Componentes Especifico](Evidencia/DiagramaDeComponetes.png)
 
+### Diagrama de Flujo - Modelo NoSQL
+
+![Diagrama de Flujo MongoDB](Evidencia/DiagramaFlujo.png)
+
 ---
 
 ## 2. Ejecución de las Funcionalidades (API)
