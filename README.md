@@ -10,6 +10,8 @@ A continuación, se presentan los diagramas que modelan la solución, mejorados 
 
 ![Diagrama de Clases de la Biblioteca](Evidencia/DiagramaDeClases.png)
 
+![Diagrama de Clases Librería](Evidencia/DiagramaClasesLibreria.png)
+
 ### Diagrama de Componentes
 
 ![Diagrama de Componentes Especifico](Evidencia/DiagramaDeComponetes.png)
