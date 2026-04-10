@@ -31,6 +31,10 @@ public class LibraryService {
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
 
+        if (book.getId() == null || book.getId().isBlank()) {
+            book.setId(UUID.randomUUID().toString());
+        }
+
         Book existing = bookRepository.findById(book.getId()).orElse(null);
         if (existing != null) {
             existing.setTotalQuantity(existing.getTotalQuantity() + quantity);
@@ -53,6 +57,9 @@ public class LibraryService {
     }
 
     public void registerUser(User user) {
+        if (user.getId() == null || user.getId().isBlank()) {
+            user.setId(UUID.randomUUID().toString());
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
     }

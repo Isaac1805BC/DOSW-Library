@@ -1,0 +1,409 @@
+{
+  "info": {
+    "name": "DOSW-Library API",
+    "description": "Colección de endpoints para el sistema de gestión de biblioteca DOSW.\n\n**Setup:**\n1. Ejecutar el servidor: `./mvnw spring-boot:run`\n2. Usar **Register** para crear un usuario LIBRARIAN.\n3. Usar **Login** → el token se guarda automáticamente en `{{token}}`.\n4. El resto de requests ya usan el token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loanId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Biblioteca\",\n  \"email\": \"admin@dosw.edu\",\n  \"password\": \"admin123\",\n  \"role\": \"LIBRARIAN\",\n  \"membershipType\": \"PLATINUM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un nuevo usuario. Roles disponibles: USER, LIBRARIAN. MembershipType: STANDARD, PLATINUM, VIP."
+          }
+        },
+        {
+          "name": "Register (User normal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juan@dosw.edu\",\n  \"password\": \"user123\",\n  \"role\": \"USER\",\n  \"membershipType\": \"STANDARD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un usuario con rol USER."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    pm.collectionVariables.set('userId', res.userId);",
+                  "    console.log('Token guardado:', res.token);",
+                  "    pm.test('Login exitoso - token recibido', () => pm.expect(res.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin@dosw.edu\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Autentica el usuario y guarda automáticamente el JWT en la variable `{{token}}`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Listar todos los libros",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (Array.isArray(res) && res.length > 0) {",
+                  "    pm.collectionVariables.set('bookId', res[0].id);",
+                  "    console.log('bookId guardado:', res[0].id);",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"]
+            },
+            "description": "Retorna todos los libros. Rol requerido: USER o LIBRARIAN. Guarda el primer bookId en variables."
+          }
+        },
+        {
+          "name": "Obtener libro por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{bookId}}"]
+            },
+            "description": "Retorna un libro por su ID. Usa la variable `{{bookId}}` guardada en 'Listar todos los libros'."
+          }
+        },
+        {
+          "name": "Agregar libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 - Libro creado', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code\",\n  \"author\": \"Robert C. Martin\",\n  \"isbn\": \"978-0132350884\",\n  \"publicationType\": \"BOOK\",\n  \"publicationDate\": \"2008-08-01\",\n  \"categories\": [\"Software Engineering\", \"Best Practices\"],\n  \"metadata\": {\n    \"pages\": 431,\n    \"language\": \"English\",\n    \"publisher\": \"Prentice Hall\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books?quantity=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
+              "query": [
+                { "key": "quantity", "value": "5", "description": "Cantidad de copias disponibles" }
+              ]
+            },
+            "description": "Agrega un libro al sistema. Rol requerido: LIBRARIAN. PublicationType: BOOK, MAGAZINE, EBOOK, BOOKLET, JOURNAL."
+          }
+        },
+        {
+          "name": "Agregar libro (Revista)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"IEEE Software\",\n  \"author\": \"IEEE\",\n  \"isbn\": \"978-0018-9162\",\n  \"publicationType\": \"MAGAZINE\",\n  \"publicationDate\": \"2024-01-01\",\n  \"categories\": [\"Technology\", \"Research\"],\n  \"metadata\": {\n    \"pages\": 120,\n    \"language\": \"English\",\n    \"publisher\": \"IEEE Press\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books?quantity=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
+              "query": [
+                { "key": "quantity", "value": "3" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Listar todos los usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (Array.isArray(res) && res.length > 0) {",
+                  "    pm.collectionVariables.set('userId', res[0].id);",
+                  "    console.log('userId guardado:', res[0].id);",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Retorna todos los usuarios. Rol requerido: LIBRARIAN."
+          }
+        },
+        {
+          "name": "Obtener usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Retorna un usuario por ID. Usa la variable `{{userId}}`."
+          }
+        },
+        {
+          "name": "Registrar usuario (LIBRARIAN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"María García\",\n  \"email\": \"maria@dosw.edu\",\n  \"password\": \"pass456\",\n  \"role\": \"USER\",\n  \"membershipType\": \"VIP\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Registra un nuevo usuario desde el panel de librarian. Rol requerido: LIBRARIAN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loans",
+      "item": [
+        {
+          "name": "Listar todos los préstamos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (Array.isArray(res) && res.length > 0) {",
+                  "    pm.collectionVariables.set('loanId', res[0].id);",
+                  "    console.log('loanId guardado:', res[0].id);",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "loans"]
+            },
+            "description": "Retorna todos los préstamos activos y pasados. Rol requerido: LIBRARIAN."
+          }
+        },
+        {
+          "name": "Préstamos por usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "loans", "user", "{{userId}}"]
+            },
+            "description": "Retorna los préstamos de un usuario. Rol: LIBRARIAN o el propio usuario."
+          }
+        },
+        {
+          "name": "Crear préstamo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const res = pm.response.json();",
+                  "    pm.collectionVariables.set('loanId', res.id);",
+                  "    console.log('loanId guardado:', res.id);",
+                  "    pm.test('Préstamo creado', () => pm.expect(res.id).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans?bookId={{bookId}}&userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "loans"],
+              "query": [
+                { "key": "bookId", "value": "{{bookId}}", "description": "ID del libro a prestar" },
+                { "key": "userId", "value": "{{userId}}", "description": "ID del usuario que toma el préstamo" }
+              ]
+            },
+            "description": "Crea un préstamo. Usa las variables `{{bookId}}` y `{{userId}}`. Rol: USER o LIBRARIAN. Guarda `{{loanId}}` automáticamente."
+          }
+        },
+        {
+          "name": "Devolver libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Libro devuelto', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const res = pm.response.json();",
+                  "    pm.test('Estado RETURNED', () => pm.expect(res.status).to.eql('RETURNED'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{loanId}}/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "loans", "{{loanId}}", "return"]
+            },
+            "description": "Registra la devolución de un préstamo. Usa la variable `{{loanId}}`. Rol: USER o LIBRARIAN."
+          }
+        }
+      ]
+    }
+  ]
+}

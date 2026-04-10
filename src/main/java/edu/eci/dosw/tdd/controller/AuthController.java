@@ -1,8 +1,11 @@
 package edu.eci.dosw.tdd.controller;
 
-import edu.eci.dosw.tdd.persistence.relational.entity.UserEntity;
-import edu.eci.dosw.tdd.persistence.relational.repository.UserRepository;
+import edu.eci.dosw.tdd.controller.dto.UserRequest;
+import edu.eci.dosw.tdd.core.model.User;
+import edu.eci.dosw.tdd.core.port.IUserRepository;
+import edu.eci.dosw.tdd.core.service.LibraryService;
 import edu.eci.dosw.tdd.security.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +14,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,8 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
+    private final IUserRepository userRepository;
+    private final LibraryService libraryService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
@@ -40,7 +42,7 @@ public class AuthController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername())
+            User user = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow();
 
             String role = userDetails.getAuthorities().stream()
@@ -48,15 +50,28 @@ public class AuthController {
                     .map(r -> r.replace("ROLE_", ""))
                     .collect(Collectors.joining(","));
 
-            String token = jwtUtil.generateToken(userDetails, userEntity.getId(), role);
+            String token = jwtUtil.generateToken(userDetails, user.getId(), role);
 
             return ResponseEntity.ok(Map.of(
                     "token", token,
-                    "userId", userEntity.getId(),
+                    "userId", user.getId(),
                     "role", role
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void register(@Valid @RequestBody UserRequest request) {
+        User user = new User();
+        user.setName(request.name());
+        user.setEmail(request.email());
+        user.setPassword(request.password());
+        user.setRole(request.role());
+        user.setMembershipType(request.membershipType());
+        user.setRegisteredAt(LocalDate.now());
+        libraryService.registerUser(user);
     }
 }

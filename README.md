@@ -53,6 +53,12 @@ Resultados del análisis de cobertura y estático del proyecto:
 
 ![Reporte de Cobertura](Evidencia/image-7.png)
 
-### Análisis Estático
+### Análisis Estático - SonarCloud
 
-![Reporte de Análisis Estático](Evidencia/image-8.png)
+El análisis estático del código se realiza con **SonarCloud**, integrado en el pipeline de CI/CD. Se ejecuta automáticamente en cada Pull Request evaluando:
+- Cobertura de código
+- Code smells
+- Bugs y vulnerabilidades de seguridad
+- Duplicación de código
+
+![Reporte de Análisis Estático SonarCloud](Evidencia/image-8.png)

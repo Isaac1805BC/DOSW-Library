@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {BookMapper.class, UserMapper.class})
 public interface LoanMapper {
 
     LoanEntity toEntity(Loan loan);

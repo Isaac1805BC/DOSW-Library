@@ -1,12 +1,14 @@
 package edu.eci.dosw.tdd.persistence.relational.entity;
 
+import edu.eci.dosw.tdd.core.model.MembershipType;
 import edu.eci.dosw.tdd.core.model.Role;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -30,4 +32,9 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private MembershipType membershipType;
+
+    private LocalDate registeredAt;
 }

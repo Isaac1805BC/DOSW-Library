@@ -1,5 +1,6 @@
 package edu.eci.dosw.tdd.persistence.relational.entity;
 
+import edu.eci.dosw.tdd.core.model.LoanHistoryEntry;
 import edu.eci.dosw.tdd.core.model.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "loans")
@@ -34,4 +36,8 @@ public class LoanEntity {
 
     @Enumerated(EnumType.STRING)
     private Status status;
+
+    @ElementCollection
+    @CollectionTable(name = "loan_history", joinColumns = @JoinColumn(name = "loan_id"))
+    private List<LoanHistoryEntry> history;
 }
